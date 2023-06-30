@@ -38,7 +38,6 @@ Application needs to be restarted for changes to take effect. Window geometry is
 ## Known issues
 - window will crash if resized to negative size
 - window size could increase under some circumstances when resizing against a screen border while holding right click
-- cursor is hard to see over white input fields, because the I-beam cursor is always white
 
 ## Immediate future plans
 - address known issues
