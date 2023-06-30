@@ -29,7 +29,7 @@ QTMagnifier::QTMagnifier(QWidget *parent, QApplication *app)
     resizingBottom = false;
     constrainToScreenBorder = false;
 
-    this->setStyleSheet("background-color:gray;");
+    this->setStyleSheet("background-color:black;");
 }
 
 void QTMagnifier::paintEvent(QPaintEvent *event)
@@ -86,7 +86,24 @@ void QTMagnifier::paintEvent(QPaintEvent *event)
     painter.drawPixmap(interTarget, blackMap, interSrc);
 
     int xHotspot = 0, yHotspot = 0;
-    QPixmap cursorIcon = getMouseCursorIcon(&xHotspot, &yHotspot);
+    QImage cursorIcon = getMouseCursorIcon(&xHotspot, &yHotspot).toImage();
+    QImage cursorAreaImage = screenshot.copy(mousePos.x() - xHotspot - magnifyArea.x(),
+                                             mousePos.y() - yHotspot - magnifyArea.y(),
+                                             cursorIcon.width(), cursorIcon.height()).toImage();
+    QImage cursorAreaImageGray = cursorAreaImage.convertToFormat(QImage::Format_Grayscale8);
+
+    double cumulativeRed = 0;
+    for (int x = 0; x < cursorIcon.width(); x++)
+        for (int y = 0; y < cursorIcon.height(); y++)
+        {
+            QColor pixel(cursorAreaImageGray.pixel(x, y));
+
+            cumulativeRed += pixel.redF();
+        }
+    cumulativeRed /= cursorIcon.width() * cursorIcon.height();
+
+    if (cumulativeRed > 0.5)
+        cursorIcon.invertPixels();
 
     QRectF cursorSrc(0.0f, 0.0f, cursorIcon.width(), cursorIcon.height());
     QRectF cursorTarget((mousePos.x() - xHotspot - magnifyArea.x()) * zoomFactor + frameWidth,
@@ -94,7 +111,7 @@ void QTMagnifier::paintEvent(QPaintEvent *event)
                         cursorIcon.width() / uiScale * zoomFactor,
                         cursorIcon.height() / uiScale * zoomFactor);
 
-    painter.drawPixmap(cursorTarget, cursorIcon, cursorSrc);
+    painter.drawImage(cursorTarget, cursorIcon, cursorSrc);
 }
 
 void QTMagnifier::mousePressEvent(QMouseEvent *event)
